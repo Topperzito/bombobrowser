@@ -252,19 +252,16 @@ conflictos, se crea un issue automáticamente.
 
 ## Licencia
 
-**Mozilla Public License 2.0**
+Este proyecto es una adaptación de **[Mozilla Firefox](https://www.mozilla.org/firefox/)**
+distribuida bajo la **Mozilla Public License 2.0**.
 
-```
-BomboBrowser
-Copyright (c) 2024-2026 Topperzito
+El código fuente original de Firefox se encuentra en
+[mozilla/gecko-dev](https://github.com/mozilla/gecko-dev)
+y también está bajo MPL 2.0.
 
-This Source Code Form is subject to the terms of the Mozilla Public
-License, v. 2.0. If a copy of the MPL was not distributed with this
-file, You can obtain one at https://mozilla.org/MPL/2.0/.
-```
-
-Basado en [Mozilla Firefox](https://www.mozilla.org/firefox/) (MPL 2.0).
-Código fuente original: [mozilla/gecko-dev](https://github.com/mozilla/gecko-dev).
+Puedes usar, modificar y distribuir este software de acuerdo con los términos
+de la MPL 2.0. Para más información:
+https://www.mozilla.org/MPL/2.0/
 
 ---
 
