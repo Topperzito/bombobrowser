@@ -46,8 +46,6 @@ jobs:
         run: rsync -av patches/ firefox-src/
 
       - name: Build BomboBrowser
-        env:
-          MOZ_AUTOMATION: 1
         run: |
           cd firefox-src
           python3 ./mach build -j2
