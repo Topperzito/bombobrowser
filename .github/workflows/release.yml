@@ -12,18 +12,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Download all artifacts
+      - name: Download artifacts
         uses: actions/download-artifact@v4
-
-      - name: Generate checksums
-        run: |
-          cd bombobrowser-linux-x86_64
-          sha256sum *.AppImage > ../checksums.txt
-          cd ../bombobrowser-win64
-          sha256sum *.exe >> ../checksums.txt
-          cd ../bombobrowser-macos
-          sha256sum *.dmg >> ../checksums.txt
-          cd ..
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
@@ -33,14 +23,6 @@ jobs:
           body: |
             ## BomboBrowser
             
-            Descarga para tu plataforma:
-            - **Linux**: AppImage (funciona en cualquier distro)
-            - **Windows**: Instalador NSIS
-            - **macOS**: DMG
-            
-            Checksums verificados en checksums.txt
+            Descarga el tarball para Linux desde los artifacts.
           files: |
-            bombobrowser-linux-x86_64/*.AppImage
-            bombobrowser-win64/*.exe
-            bombobrowser-macos/*.dmg
-            checksums.txt
+            bombobrowser-linux-x86_64/*.tar.gz

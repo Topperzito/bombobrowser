@@ -59,7 +59,7 @@ StartupWMClass=BomboBrowser
 DESKTOP
 
     # Descargar icono
-    curl -sL "https://github.com/$REPO/raw/main/patches/branding/default128.png" \
+    curl -sL "https://github.com/$REPO/raw/main/patches/browser/branding/bombo/default128.png" \
         -o "$HOME/.local/share/icons/hicolor/128x128/apps/bombobrowser.png"
 
     xdg-desktop-menu forceupdate 2>/dev/null || true
