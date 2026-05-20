@@ -32,3 +32,6 @@ mk_add_options AUTOCLOBBER=1
 
 # Use system toolchain (don't try to install packages)
 ac_add_options --disable-bootstrap
+
+# Use RecursiveMake backend only (skip FasterMake to avoid stamp file issue)
+ac_add_options --build-backends RecursiveMake
