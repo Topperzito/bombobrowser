@@ -1,0 +1,52 @@
+#!/bin/bash
+set -e
+
+# BomboBrowser installer
+# Usage: sudo ./install.sh
+
+if [[ $EUID -ne 0 ]]; then
+    echo "This script must be run as root (use sudo)."
+    exit 1
+fi
+
+BINDIR=/usr/local/bin
+ICONDIR=/usr/local/share/icons/hicolor
+APPDIR=/usr/local/share/applications
+DOCDIR=/usr/local/share/doc/bombobrowser
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+echo "Installing BomboBrowser..."
+
+# Binary
+install -Dm755 "$SCRIPT_DIR/bombobrowser" "$BINDIR/bombobrowser"
+echo "  Binary: $BINDIR/bombobrowser"
+
+# Icons
+if [ -d "$SCRIPT_DIR/icons" ]; then
+    for icon in "$SCRIPT_DIR/icons"/*.png; do
+        size=$(basename "$icon" .png)
+        install -Dm644 "$icon" "$ICONDIR/${size}x${size}/apps/bombobrowser.png"
+        echo "  Icon: $ICONDIR/${size}x${size}/apps/bombobrowser.png"
+    done
+fi
+
+# Desktop entry
+install -Dm644 "$SCRIPT_DIR/bombobrowser.desktop" "$APPDIR/bombobrowser.desktop"
+echo "  Desktop: $APPDIR/bombobrowser.desktop"
+
+# Documentation
+if [ -d "$SCRIPT_DIR/docs" ]; then
+    mkdir -p "$DOCDIR"
+    cp -r "$SCRIPT_DIR/docs/"* "$DOCDIR/"
+    echo "  Docs: $DOCDIR"
+fi
+
+# Update icon cache
+if command -v gtk-update-icon-cache &>/dev/null; then
+    gtk-update-icon-cache -f -t "$ICONDIR" 2>/dev/null || true
+fi
+
+echo ""
+echo "BomboBrowser installed successfully!"
+echo "Run 'bombobrowser' to start."
