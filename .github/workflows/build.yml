@@ -19,7 +19,6 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y \
             clang llvm rustc cargo lld \
-            nodejs \
             nasm yasm \
             libgtk-3-dev libdbus-glib-1-dev \
             libpulse-dev libasound2-dev \
@@ -30,9 +29,13 @@ jobs:
             libxss-dev libxcursor-dev \
             libcairo2-dev libpango1.0-dev \
             libgdk-pixbuf-2.0-dev \
-            pkg-config autoconf cbindgen \
+            pkg-config autoconf \
             python3-pip python3-venv
-          which node || sudo ln -sf /usr/bin/nodejs /usr/local/bin/node || true
+          # Install Node.js from NodeSource (provides both node and nodejs)
+          curl -fsSL https://deb.nodesource.com/setup_20.x | sudo bash -
+          sudo apt-get install -y nodejs
+          # Ensure nodejs command exists
+          which nodejs || sudo ln -sf /usr/bin/node /usr/bin/nodejs || true
 
       - name: Clone Firefox source
         run: git clone --depth=1 https://github.com/mozilla/gecko-dev.git firefox-src
