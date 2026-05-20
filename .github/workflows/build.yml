@@ -50,30 +50,77 @@ jobs:
           cd firefox-src
           python3 ./mach build -j2
 
-      - name: Package AppImage
+      - name: Package BomboBrowser
         run: |
-          sudo wget -O /usr/local/bin/appimagetool \
-            https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
-          sudo chmod +x /usr/local/bin/appimagetool
-          mkdir -p dist
-          cd firefox-src
-          mkdir -p BomboBrowser.AppDir/usr/bin
-          cp obj-*/dist/bin/firefox BomboBrowser.AppDir/usr/bin/bombobrowser
-          cp browser/branding/bombo/default128.png BomboBrowser.AppDir/bombobrowser.png
-          cat > BomboBrowser.AppDir/bombobrowser.desktop << 'EOF'
+          PKGNAME="bombobrowser-$(date +%Y%m%d)-x86_64"
+          mkdir -p dist/$PKGNAME/icons docs
+
+          # Copy binary
+          OBJDIR=$(ls -d firefox-src/obj-* 2>/dev/null | head -1)
+          if [ -z "$OBJDIR" ]; then
+            echo "ERROR: No obj-* directory found in firefox-src/"
+            ls firefox-src/
+            exit 1
+          fi
+          cp "$OBJDIR/dist/bin/firefox" "dist/$PKGNAME/bombobrowser"
+          strip "dist/$PKGNAME/bombobrowser"
+
+          # Copy icons from branding
+          cd firefox-src/browser/branding/bombo
+          for f in default*.png; do
+            size=$(echo "$f" | sed 's/default\(.*\)\.png/\1/')
+            cp "$f" "../../../../dist/$PKGNAME/icons/${size}.png"
+          done
+          cd ../../../..
+
+          # Copy install script
+          cp install.sh "dist/$PKGNAME/install.sh"
+          chmod +x "dist/$PKGNAME/install.sh"
+
+          # Create uninstall script
+          cat > "dist/$PKGNAME/uninstall.sh" << 'UNINSTALL'
+          #!/bin/bash
+          set -e
+          if [[ $EUID -ne 0 ]]; then
+              echo "Run with sudo."; exit 1
+          fi
+          rm -f /usr/local/bin/bombobrowser
+          rm -f /usr/local/share/applications/bombobrowser.desktop
+          for size in 16 32 48 64 128; do
+            rm -f "/usr/local/share/icons/hicolor/${size}x${size}/apps/bombobrowser.png"
+          done
+          rm -rf /usr/local/share/doc/bombobrowser
+          echo "BomboBrowser uninstalled."
+          UNINSTALL
+          chmod +x "dist/$PKGNAME/uninstall.sh"
+
+          # Copy docs
+          cp README.md "dist/$PKGNAME/docs/" 2>/dev/null || true
+          cp LICENSE "dist/$PKGNAME/docs/" 2>/dev/null || true
+
+          # Create desktop file
+          cat > "dist/$PKGNAME/bombobrowser.desktop" << EOF
           [Desktop Entry]
           Name=BomboBrowser
+          Comment=Privacy-focused Firefox fork
           Exec=bombobrowser
           Icon=bombobrowser
           Type=Application
           Categories=Network;WebBrowser;
+          Terminal=false
+          StartupNotify=true
           EOF
-          appimagetool BomboBrowser.AppDir dist/bombobrowser-linux-x86_64.AppImage
+
+          # Create tarball
+          cd dist
+          tar czf "$PKGNAME.tar.gz" "$PKGNAME/"
+          ls -lh "$PKGNAME.tar.gz"
+          cd ..
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: bombobrowser-linux-x86_64
-          path: dist/*.AppImage
+          path: dist/*.tar.gz
 
 
