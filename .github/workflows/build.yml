@@ -47,7 +47,7 @@ jobs:
       - name: Build
         run: |
           cd firefox-src
-          python3 ./mach build -j$(nproc)
+          python3 ./mach build -j2
 
       - name: Package AppImage
         run: |
