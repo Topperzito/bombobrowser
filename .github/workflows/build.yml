@@ -31,11 +31,13 @@ jobs:
             libgdk-pixbuf-2.0-dev \
             pkg-config autoconf \
             python3-pip python3-venv
-          # Install Node.js from NodeSource (provides both node and nodejs)
+          # Install Node.js v20
           curl -fsSL https://deb.nodesource.com/setup_20.x | sudo bash -
           sudo apt-get install -y nodejs
-          # Ensure nodejs command exists
-          which nodejs || sudo ln -sf /usr/bin/node /usr/bin/nodejs || true
+          # Ensure 'nodejs' command exists (Firefox checks for it)
+          sudo ln -sf /usr/bin/node /usr/bin/nodejs
+          # Install cbindgen if not available
+          which cbindgen || cargo install cbindgen
 
       - name: Clone Firefox source
         run: git clone --depth=1 https://github.com/mozilla/gecko-dev.git firefox-src
@@ -43,12 +45,9 @@ jobs:
       - name: Apply BomboBrowser patches
         run: rsync -av patches/ firefox-src/
 
-      - name: Configure build
-        run: |
-          cd firefox-src
-          python3 ./mach configure
-
-      - name: Build
+      - name: Build BomboBrowser
+        env:
+          MOZ_AUTOMATION: 1
         run: |
           cd firefox-src
           python3 ./mach build -j2
