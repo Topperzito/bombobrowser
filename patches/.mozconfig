@@ -4,26 +4,23 @@
 # Custom branding
 ac_add_options --with-branding=browser/branding/bombo
 
-# Disable crash reporter, updater, tests
+# Release mode, no debug/tests
+ac_add_options --enable-release
+ac_add_options --disable-debug
+ac_add_options --disable-tests
+
+# Disable crash reporter and updater
 ac_add_options --disable-crashreporter
 ac_add_options --disable-updater
-ac_add_options --disable-tests
-ac_add_options --disable-debug
-ac_add_options --enable-release
 
-# Disable telemetry at build level
+# Telemetry off
 MOZ_TELEMETRY_REPORTING=
+MOZ_CRASHREPORTER=
+MOZ_UPDATER=
+MOZ_DATA_REPORTING=
 
 # Optimizations
 ac_add_options --enable-optimize="-O2"
-ac_add_options --enable-linker=lld
-
-# Disable unnecessary features
-ac_add_options --disable-webrtc
-ac_add_options --disable-parental-controls
 
 # Use system toolchain
 ac_add_options --disable-bootstrap
-
-# Parallel build
-mk_add_options MOZ_MAKE_FLAGS="-j14"
