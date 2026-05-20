@@ -1,6 +1,6 @@
 # BomboBrowser 🥁
 
-Navegador web privado basado en Firefox. Sin telemetría, sin espionaje, solo actualizaciones de seguridad.
+Navegador web privado basado en Firefox creado por un Valenciano.
 
 ## Instalación
 
@@ -35,7 +35,7 @@ cp patches/.mozconfig .
 
 ## Actualizaciones
 
-El navegador checkea automáticamente GitHub Releases al iniciar. Las actualizaciones de seguridad de Firefox se fusionan automáticamente vía GitHub Actions diariamente.
+El navegador checkea automáticamente GitHub Releases al iniciar.
 
 ## Licencia
 
