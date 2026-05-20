@@ -42,13 +42,18 @@ jobs:
       - name: Clone Firefox source
         run: git clone --depth=1 https://github.com/mozilla/gecko-dev.git firefox-src
 
-      - name: Apply BomboBrowser patches
-        run: rsync -av patches/ firefox-src/
-
-      - name: Build BomboBrowser
+      - name: Build Firefox (unmodified)
         run: |
           cd firefox-src
-          python3 ./mach build -j2
+          python3 ./mach build -j2 2>&1
+
+      - name: Capture build log on failure
+        if: failure()
+        run: |
+          cd firefox-src
+          find . -name "*.log" -path "*/build/*" | head -5
+          cat build/config.log 2>/dev/null || true
+          ls build/ 2>/dev/null | head -20
 
       - name: Package AppImage
         run: |
