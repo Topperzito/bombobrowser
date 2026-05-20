@@ -10,14 +10,7 @@ on:
 
 jobs:
   build-linux:
-    strategy:
-      matrix:
-        include:
-          - arch: x86_64
-            runner: ubuntu-24.04
-          - arch: aarch64
-            runner: ubuntu-24.04-arm
-    runs-on: ${{ matrix.runner }}
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
 
@@ -74,12 +67,12 @@ jobs:
           Type=Application
           Categories=Network;WebBrowser;
           EOF
-          appimagetool BomboBrowser.AppDir dist/bombobrowser-linux-${{ matrix.arch }}.AppImage
+          appimagetool BomboBrowser.AppDir dist/bombobrowser-linux-x86_64.AppImage
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: bombobrowser-linux-${{ matrix.arch }}
+          name: bombobrowser-linux-x86_64
           path: dist/*.AppImage
 
   build-windows:
