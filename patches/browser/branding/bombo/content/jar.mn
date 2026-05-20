@@ -1,5 +1,5 @@
 browser.jar:
-  % content branding %content/branding/ contentaccessible=yes
+% content branding %content/branding/ contentaccessible=yes
   content/branding/about.png
   content/branding/about-logo.png
   content/branding/about-logo.svg
