@@ -1,6 +1,6 @@
 # BomboBrowser 🥁
 
-Navegador web privado basado en Firefox creado por un Valenciano.
+Navegador web basado en Firefox creado por un Valenciano.
 
 ## Instalación
 
