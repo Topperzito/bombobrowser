@@ -1,0 +1,43 @@
+name: Auto-merge Firefox Security Updates
+
+on:
+  schedule:
+    # Daily at 6:00 UTC
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+
+jobs:
+  merge:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get latest Firefox ESR tag
+        run: |
+          git remote add upstream https://github.com/mozilla/gecko-dev.git
+          git fetch upstream --tags --depth=1 2>&1 | tail -2
+          # Get latest ESR tag
+          TAG=$(git tag -l "FIREFOX_*_ESR" --sort=-version:refname | head -1)
+          echo "LATEST_ESR=$TAG" >> $GITHUB_ENV
+
+      - name: Try merge
+        id: merge
+        continue-on-error: true
+        run: |
+          git checkout main
+          git merge --no-edit "upstream/${{ env.LATEST_ESR }}"
+          git push
+
+      - name: Notify if merge failed
+        if: steps.merge.outcome == 'failure'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '⚠️ Merge conflict con upstream Firefox',
+              body: 'El merge automático con la última ESR de Firefox falló. Resolver manualmente.',
+            })

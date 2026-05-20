@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="rim" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#d4a453"/>
+      <stop offset="50%" stop-color="#c9954a"/>
+      <stop offset="100%" stop-color="#a67c3e"/>
+    </linearGradient>
+    <linearGradient id="head" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f5e6d3"/>
+      <stop offset="40%" stop-color="#e8d4b8"/>
+      <stop offset="100%" stop-color="#d4b896"/>
+    </linearGradient>
+    <linearGradient id="body" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#8b5a2b"/>
+      <stop offset="40%" stop-color="#a07030"/>
+      <stop offset="100%" stop-color="#7a4a20"/>
+    </linearGradient>
+    <linearGradient id="body2" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#7a4a20"/>
+      <stop offset="60%" stop-color="#a07030"/>
+      <stop offset="100%" stop-color="#6b3f18"/>
+    </linearGradient>
+  </defs>
+  <!-- Shadow -->
+  <ellipse cx="256" cy="430" rx="160" ry="20" fill="#000" opacity="0.12"/>
+  <!-- Drum body (cylinder) -->
+  <rect x="116" y="180" width="280" height="160" rx="4" fill="url(#body)"/>
+  <!-- Drum body wood texture lines -->
+  <line x1="180" y1="180" x2="180" y2="340" stroke="#6b3f18" stroke-width="0.5" opacity="0.3"/>
+  <line x1="210" y1="180" x2="210" y2="340" stroke="#6b3f18" stroke-width="0.5" opacity="0.3"/>
+  <line x1="240" y1="180" x2="240" y2="340" stroke="#6b3f18" stroke-width="0.5" opacity="0.3"/>
+  <line x1="270" y1="180" x2="270" y2="340" stroke="#6b3f18" stroke-width="0.5" opacity="0.3"/>
+  <line x1="300" y1="180" x2="300" y2="340" stroke="#6b3f18" stroke-width="0.5" opacity="0.3"/>
+  <line x1="330" y1="180" x2="330" y2="340" stroke="#6b3f18" stroke-width="0.5" opacity="0.3"/>
+  <!-- Bottom rim -->
+  <rect x="108" y="320" width="296" height="28" rx="6" fill="url(#rim)" stroke="#a67c3e" stroke-width="1"/>
+  <rect x="108" y="320" width="296" height="8" rx="3" fill="#d4a453" opacity="0.4"/>
+  <!-- Drum head (top) -->
+  <ellipse cx="256" cy="180" rx="150" ry="35" fill="url(#head)" stroke="#c9954a" stroke-width="2"/>
+  <!-- Top rim -->
+  <ellipse cx="256" cy="180" rx="150" ry="35" fill="none" stroke="url(#rim)" stroke-width="8"/>
+  <ellipse cx="256" cy="180" rx="150" ry="35" fill="none" stroke="#d4a453" stroke-width="2" opacity="0.5"/>
+  <!-- Top rim highlight -->
+  <ellipse cx="256" cy="175" rx="130" ry="28" fill="none" stroke="#f0d8b0" stroke-width="1" opacity="0.3"/>
+  <!-- Center drum head detail -->
+  <ellipse cx="256" cy="178" rx="70" ry="15" fill="none" stroke="#c4a880" stroke-width="1" opacity="0.4"/>
+  <!-- Rope tension system -->
+  <line x1="130" y1="185" x2="120" y2="325" stroke="#c9954a" stroke-width="2" opacity="0.6"/>
+  <line x1="160" y1="195" x2="150" y2="325" stroke="#c9954a" stroke-width="2" opacity="0.6"/>
+  <line x1="200" y1="200" x2="195" y2="325" stroke="#c9954a" stroke-width="2" opacity="0.6"/>
+  <line x1="240" y1="205" x2="238" y2="325" stroke="#c9954a" stroke-width="2" opacity="0.6"/>
+  <line x1="280" y1="205" x2="278" y2="325" stroke="#c9954a" stroke-width="2" opacity="0.6"/>
+  <line x1="320" y1="200" x2="318" y2="325" stroke="#c9954a" stroke-width="2" opacity="0.6"/>
+  <line x1="360" y1="195" x2="358" y2="325" stroke="#c9954a" stroke-width="2" opacity="0.6"/>
+  <line x1="382" y1="185" x2="392" y2="325" stroke="#c9954a" stroke-width="2" opacity="0.6"/>
+  <!-- Right-side ropes -->
+  <line x1="370" y1="188" x2="378" y2="325" stroke="#c9954a" stroke-width="1.5" opacity="0.4"/>
+  <line x1="145" y1="190" x2="135" y2="325" stroke="#c9954a" stroke-width="1.5" opacity="0.4"/>
+  <!-- Bottom body shadow -->
+  <rect x="116" y="310" width="280" height="30" rx="2" fill="#5a3510" opacity="0.15"/>
+</svg>
