@@ -30,8 +30,8 @@ jobs:
             libxss-dev libxcursor-dev \
             libcairo2-dev libpango1.0-dev \
             libgdk-pixbuf-2.0-dev \
-            pkg-config autoconf \
-            python3-pip python3.12-venv
+            pkg-config autoconf cbindgen \
+            python3-pip python3-venv
 
       - name: Clone Firefox source
         run: git clone --depth=1 https://github.com/mozilla/gecko-dev.git firefox-src
@@ -42,12 +42,12 @@ jobs:
       - name: Configure build
         run: |
           cd firefox-src
-          python3.12 ./mach configure
+          python3 ./mach configure
 
       - name: Build
         run: |
           cd firefox-src
-          python3.12 ./mach build -j$(nproc)
+          python3 ./mach build -j$(nproc)
 
       - name: Package AppImage
         run: |
