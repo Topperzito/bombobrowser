@@ -5,7 +5,7 @@
 set -e
 
 VERSION="${1:-latest}"
-REPO="daniel-ingresa/bombobrowser"
+REPO="Topperzito/bombobrowser"
 INSTALL_DIR="${2:-$HOME/.local/bin}"
 
 echo "=== BomboBrowser Installer ==="

@@ -6,7 +6,7 @@
 "use strict";
 
 var gBomboUpdate = {
-  OWNER: "daniel-ingresa",
+  OWNER: "Topperzito",
   REPO: "bombobrowser",
   CURRENT_VERSION: "1.0.0",
 

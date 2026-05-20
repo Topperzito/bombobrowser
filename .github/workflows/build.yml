@@ -13,7 +13,12 @@ jobs:
     runs-on: ubuntu-24.04
     strategy:
       matrix:
-        arch: [x86_64, aarch64]
+        include:
+          - arch: x86_64
+            runner: ubuntu-24.04
+          - arch: aarch64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4
 
@@ -21,7 +26,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            clang llvm rustc cargo \
+            clang llvm rustc cargo lld \
             nodejs npm \
             nasm yasm \
             libgtk-3-dev libdbus-glib-1-dev \
@@ -37,14 +42,10 @@ jobs:
             python3-pip python3.12-venv
 
       - name: Clone Firefox source
-        run: |
-          git clone --depth=1 https://github.com/mozilla/gecko-dev.git firefox-src
-          cd firefox-src
+        run: git clone --depth=1 https://github.com/mozilla/gecko-dev.git firefox-src
 
       - name: Apply BomboBrowser patches
-        run: |
-          rsync -av patches/ firefox-src/
-          cp .mozconfig firefox-src/.mozconfig
+        run: rsync -av patches/ firefox-src/
 
       - name: Configure build
         run: |
@@ -58,14 +59,15 @@ jobs:
 
       - name: Package AppImage
         run: |
+          sudo wget -O /usr/local/bin/appimagetool \
+            https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
+          sudo chmod +x /usr/local/bin/appimagetool
           mkdir -p dist
           cd firefox-src
-          # Create AppImage structure
           mkdir -p BomboBrowser.AppDir/usr/bin
           cp obj-*/dist/bin/firefox BomboBrowser.AppDir/usr/bin/bombobrowser
-          cp -r obj-*/dist/bin/* BomboBrowser.AppDir/usr/bin/
-          # Create .desktop file
-          cat > BomboBrowser.AppDir/bombobrowser.desktop << EOF
+          cp browser/branding/bombo/default128.png BomboBrowser.AppDir/bombobrowser.png
+          cat > BomboBrowser.AppDir/bombobrowser.desktop << 'EOF'
           [Desktop Entry]
           Name=BomboBrowser
           Exec=bombobrowser
@@ -73,11 +75,7 @@ jobs:
           Type=Application
           Categories=Network;WebBrowser;
           EOF
-          # Copy icon
-          cp browser/branding/bombo/default128.png BomboBrowser.AppDir/bombobrowser.png
-          # Create AppImage
-          cd BomboBrowser.AppDir
-          appimagetool-x86_64 .
+          appimagetool BomboBrowser.AppDir dist/bombobrowser-linux-${{ matrix.arch }}.AppImage
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
@@ -91,16 +89,15 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install MozillaBuild
-        run: |
-          choco install mozilla-build -y
+        run: choco install mozilla-build -y
 
       - name: Clone and Build
+        shell: cmd
         run: |
           git clone --depth=1 https://github.com/mozilla/gecko-dev.git firefox-src
-          rsync -av patches/ firefox-src/
-          cp .mozconfig firefox-src/.mozconfig
+          xcopy patches\* firefox-src\ /E /I /Y
           cd firefox-src
-          ./mach build -j$(nproc)
+          C:\mozilla-build\start-shell.bat -c "./mach build -j$(nproc)"
 
       - name: Package NSIS installer
         run: |
@@ -119,15 +116,20 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install dependencies
-        run: brew install rust node
-
-      - name: Clone and Build
         run: |
-          git clone --depth=1 https://github.com/mozilla/gecko-dev.git firefox-src
-          rsync -av patches/ firefox-src/
-          cp .mozconfig firefox-src/.mozconfig
+          brew install rust node python@3.12
+          brew link --overwrite python@3.12
+
+      - name: Clone Firefox source
+        run: git clone --depth=1 https://github.com/mozilla/gecko-dev.git firefox-src
+
+      - name: Apply patches
+        run: rsync -av patches/ firefox-src/
+
+      - name: Build
+        run: |
           cd firefox-src
-          ./mach build -j$(sysctl -n hw.logicalcpu)
+          python3.12 ./mach build -j$(sysctl -n hw.logicalcpu)
 
       - name: Package DMG
         run: |
