@@ -87,21 +87,37 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install MozillaBuild
-        run: choco install mozilla-build -y
+      - name: Install deps
+        shell: pwsh
+        run: |
+          choco install python3 wixtoolset -y --no-progress
+          # MozillaBuild provides MSYS environment needed for Firefox build
+          Invoke-WebRequest -Uri "https://ftp.mozilla.org/pub/mozilla/libraries/win32/MozillaBuildSetup-Latest.exe" -OutFile "$env:TEMP\mb.exe"
+          Start-Process "$env:TEMP\mb.exe" -ArgumentList "/S /D=C:\mozilla-build" -Wait
 
-      - name: Clone and Build
+      - name: Clone & Apply patches
         shell: cmd
         run: |
           git clone --depth=1 https://github.com/mozilla/gecko-dev.git firefox-src
-          xcopy patches\* firefox-src\ /E /I /Y
-          cd firefox-src
-          C:\mozilla-build\start-shell.bat -c "./mach build -j$(nproc)"
+          xcopy patches firefox-src\patches\ /E /I /Y
+          xcopy patches\.mozconfig firefox-src\ /Y
 
-      - name: Package NSIS installer
+      - name: Build
+        shell: cmd
         run: |
+          set "MOZBUILD=C:\mozilla-build"
+          set "PATH=%MOZBUILD%\bin;%MOZBUILD%\msys\bin;%PATH%"
+          set "PYTHON3=%MOZBUILD%\python3\python3.exe"
           cd firefox-src
-          ./mach package
+          %MOZBUILD%\start-shell.bat -c "./mach build -j4"
+
+      - name: Package
+        shell: cmd
+        run: |
+          set "MOZBUILD=C:\mozilla-build"
+          set "PATH=%MOZBUILD%\bin;%MOZBUILD%\msys\bin;%PATH%"
+          cd firefox-src
+          %MOZBUILD%\start-shell.bat -c "./mach package"
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
