@@ -10,8 +10,7 @@ on:
 jobs:
 
   # ============================================================
-  #  LINUX  (Ubuntu 24.04)
-  #  Produces: bombobrowser-YYYYMMDD-x86_64.tar.gz
+  #  LINUX (Ubuntu 24.04)
   # ============================================================
   build-linux:
     name: Linux (Ubuntu 24.04)
@@ -45,11 +44,22 @@ jobs:
             libcairo2-dev libpango1.0-dev \
             libgdk-pixbuf-2.0-dev \
             pkg-config autoconf rsync \
-            python3-pip python3-venv
+            python3-pip python3-venv \
+            libfontconfig1-dev \
+            libfreetype6-dev \
+            libx11-dev \
+            libxcb-shm0-dev \
+            libxcb-xfixes0-dev \
+            libxcb-shape0-dev \
+            libgl1-mesa-dev \
+            libegl1-mesa-dev
           curl -fsSL https://deb.nodesource.com/setup_20.x | sudo bash -
           sudo apt-get install -y nodejs
           sudo ln -sf /usr/bin/node /usr/bin/nodejs || true
           which cbindgen || cargo install cbindgen
+          # Fix pyyaml conflict
+          pip3 uninstall -y pyyaml || true
+          pip3 install 'pyyaml==6.0.2'
 
       - name: Clone Firefox source
         run: git clone --depth=1 https://github.com/mozilla/gecko-dev.git firefox-src
@@ -76,11 +86,12 @@ jobs:
           strip "dist/$PKGNAME/bombobrowser"
 
           for f in firefox-src/browser/branding/bombo/default*.png; do
+            [ -f "$f" ] || continue
             sz=$(basename "$f" | sed 's/default\(.*\)\.png/\1/')
             cp "$f" "dist/$PKGNAME/icons/${sz}.png"
           done
 
-          cp install.sh "dist/$PKGNAME/install.sh" && chmod +x "dist/$PKGNAME/install.sh"
+          [ -f install.sh ] && cp install.sh "dist/$PKGNAME/install.sh" && chmod +x "dist/$PKGNAME/install.sh"
 
           printf '%s\n' \
             '[Desktop Entry]' \
@@ -110,8 +121,8 @@ jobs:
             > "dist/$PKGNAME/uninstall.sh"
           chmod +x "dist/$PKGNAME/uninstall.sh"
 
-          cp README.md "dist/$PKGNAME/docs/" 2>/dev/null || true
-          cp LICENSE "dist/$PKGNAME/docs/" 2>/dev/null || true
+          [ -f README.md ] && cp README.md "dist/$PKGNAME/docs/" 2>/dev/null || true
+          [ -f LICENSE ] && cp LICENSE "dist/$PKGNAME/docs/" 2>/dev/null || true
 
           cd dist
           tar czf "${PKGNAME}.tar.gz" "${PKGNAME}/"
@@ -126,8 +137,7 @@ jobs:
           retention-days: 30
 
   # ============================================================
-  #  WINDOWS  (windows-2022 → Visual Studio 2022 + MozillaBuild)
-  #  Produces: bombobrowser-YYYYMMDD-win64-setup.exe
+  #  WINDOWS (windows-2022)
   # ============================================================
   build-windows:
     name: Windows (2022)
@@ -189,12 +199,10 @@ jobs:
           mkdir -p "dist/$PKGNAME"
           cp "$OBJDIR/dist/bin/firefox.exe" "dist/$PKGNAME/bombobrowser.exe"
 
-          # Copy runtime DLLs
           cp "$OBJDIR/dist/bin/"*.dll "dist/$PKGNAME/" 2>/dev/null || true
           cp -r "$OBJDIR/dist/bin/browser" "dist/$PKGNAME/browser" 2>/dev/null || true
           cp -r "$OBJDIR/dist/bin/defaults" "dist/$PKGNAME/defaults" 2>/dev/null || true
 
-          # Create simple NSIS installer script
           printf '%s\n' \
             '!include "MUI2.nsh"' \
             'Name "BomboBrowser"' \
@@ -229,12 +237,10 @@ jobs:
             > "dist/installer.nsi"
 
           cd dist
-          # Build NSIS installer if makensis is available
           if command -v makensis &>/dev/null; then
             makensis installer.nsi
             mv bombobrowser-setup.exe "${PKGNAME}-setup.exe"
           else
-            # Fallback: zip package
             powershell -Command "Compress-Archive -Path '${PKGNAME}' -DestinationPath '${PKGNAME}.zip'"
           fi
           ls -lh
@@ -249,7 +255,7 @@ jobs:
           retention-days: 30
 
   # ============================================================
-  #  RELEASE  — runs after both builds succeed
+  #  RELEASE
   # ============================================================
   release:
     name: Publish GitHub Release
@@ -257,7 +263,6 @@ jobs:
     runs-on: ubuntu-24.04
     permissions:
       contents: write
-    # Only release on push to main, not on the daily schedule
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
 
     steps:
@@ -285,6 +290,6 @@ jobs:
 
             ---
 
-            ### 🐧 Linux (Ubuntu, Debian, Arch y cualquier distro)
+            ### 🐧 Linux
             ```bash
             bash <(curl -sL https://github.com/Topperzito/bombobrowser/raw/main/installers/linux-install.sh)

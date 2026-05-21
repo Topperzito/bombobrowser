@@ -1,40 +1,22 @@
 # Build config for BomboBrowser
 . $topsrcdir/browser/config/mozconfig
 
-# Custom branding
 ac_add_options --with-branding=browser/branding/bombo
-
-# Disable debug/tests (optimised release build)
 ac_add_options --disable-debug
 ac_add_options --disable-tests
-
-# Disable crash reporter and Firefox updater (BomboBrowser has its own)
 ac_add_options --disable-crashreporter
 ac_add_options --disable-updater
 
-# Disable telemetry at build level
 unset MOZ_TELEMETRY_REPORTING
 unset MOZ_CRASHREPORTER
 unset MOZ_UPDATER
 unset MOZ_DATA_REPORTING
 
-# Compiler optimisation
 ac_add_options --enable-optimize="-O2"
-
-# WASM sandboxed libraries require the WASI SDK — not available on CI
 ac_add_options --without-wasm-sandboxed-libraries
-
-# Use the system-installed Node.js; do NOT let mach download its own copy
 ac_add_options --disable-nodejs
-
-# Use system toolchain — do not let bootstrap install packages
 ac_add_options --disable-bootstrap
-
-# Build backends: RecursiveMake for the actual build
 ac_add_options --build-backends=RecursiveMake
 
-# Use system Python packages when possible
 export MACH_BUILD_PYTHON_NATIVE_PACKAGE_SOURCE=system
-
-# Auto-clobber when the build configuration changes
 mk_add_options AUTOCLOBBER=1
