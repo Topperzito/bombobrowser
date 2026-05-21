@@ -13,10 +13,10 @@ ac_add_options --disable-crashreporter
 ac_add_options --disable-updater
 
 # Disable telemetry at build level
-MOZ_TELEMETRY_REPORTING=
-MOZ_CRASHREPORTER=
-MOZ_UPDATER=
-MOZ_DATA_REPORTING=
+unset MOZ_TELEMETRY_REPORTING
+unset MOZ_CRASHREPORTER
+unset MOZ_UPDATER
+unset MOZ_DATA_REPORTING
 
 # Compiler optimisation
 ac_add_options --enable-optimize="-O2"
@@ -30,9 +30,10 @@ ac_add_options --disable-nodejs
 # Use system toolchain — do not let bootstrap install packages
 ac_add_options --disable-bootstrap
 
-# Build backends: RecursiveMake for the actual build,
-# Clangd for compile_commands.json (IDE support) — these are separate options
+# Build backends: RecursiveMake for the actual build
 ac_add_options --build-backends=RecursiveMake
+
+# Use system Python packages when possible
 export MACH_BUILD_PYTHON_NATIVE_PACKAGE_SOURCE=system
 
 # Auto-clobber when the build configuration changes
