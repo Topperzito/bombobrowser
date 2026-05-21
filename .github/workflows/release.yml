@@ -4,25 +4,59 @@ on:
   workflow_run:
     workflows: ["Build BomboBrowser"]
     types: [completed]
+    branches: [main, master]
 
 jobs:
   release:
     runs-on: ubuntu-24.04
-    if: github.event.workflow_run.conclusion == 'success'
+    permissions:
+      contents: write
+
+    # Only run when the build succeeded and was triggered from main/master
+    if: >
+      github.event.workflow_run.conclusion == 'success' &&
+      (github.event.workflow_run.head_branch == 'main' ||
+       github.event.workflow_run.head_branch == 'master')
+
     steps:
       - uses: actions/checkout@v4
 
       - name: Download artifacts
         uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.event.workflow_run.id }}
+          path: artifacts
 
-      - name: Create Release
+      - name: Determine version tag
+        id: version
+        run: |
+          # Use date-based tag so every successful build creates a unique release
+          TAG="v$(date +%Y%m%d)"
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "name=BomboBrowser $TAG" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ github.ref_name || '1.0.0' }}
-          name: BomboBrowser ${{ github.ref_name || '1.0.0' }}
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: ${{ steps.version.outputs.name }}
           body: |
-            ## BomboBrowser
-            
-            Descarga el tarball para Linux desde los artifacts.
-          files: |
-            bombobrowser-linux-x86_64/*.tar.gz
+            ## BomboBrowser ${{ steps.version.outputs.tag }}
+
+            Fork de Firefox con privacidad reforzada.
+
+            ### Instalación en Linux
+            ```bash
+            bash <(curl -sL https://github.com/Topperzito/bombobrowser/raw/main/installers/linux-install.sh)
+            ```
+
+            O descarga el tarball y ejecuta:
+            ```bash
+            tar xzf bombobrowser-*-x86_64.tar.gz
+            cd bombobrowser-*-x86_64
+            sudo ./install.sh
+            ```
+          files: artifacts/bombobrowser-linux-x86_64/*.tar.gz
+          make_latest: true
+          fail_on_unmatched_files: false

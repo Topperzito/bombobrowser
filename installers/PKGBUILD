@@ -1,0 +1,98 @@
+# Maintainer: Topperzito <tu-email@ejemplo.com>
+# Descripción: BomboBrowser - Fork de Firefox con privacidad reforzada
+# AUR package: bombobrowser-bin
+# Instala el binario pre-compilado desde los GitHub Releases.
+# Para compilar desde fuente usa el paquete 'bombobrowser' (sin -bin).
+
+pkgname=bombobrowser-bin
+pkgver=20250521          # Se actualiza automáticamente con el script update
+pkgrel=1
+pkgdesc="Navegador web basado en Firefox con privacidad reforzada"
+arch=('x86_64')
+url="https://github.com/Topperzito/bombobrowser"
+license=('MPL2')
+depends=(
+    'gtk3'
+    'libxt'
+    'mime-types'
+    'dbus-glib'
+    'ffmpeg'
+    'ttf-font'
+    'libpulse'
+    'alsa-lib'
+)
+optdepends=(
+    'libnotify: Notificaciones de escritorio'
+    'speech-dispatcher: Text-to-speech'
+    'xdg-desktop-portal: Integración con portales de escritorio'
+)
+provides=("bombobrowser=$pkgver")
+conflicts=('bombobrowser')
+options=('!strip')
+
+# La URL se actualiza con el script update() de abajo
+source=("bombobrowser-${pkgver}-x86_64.tar.gz::https://github.com/Topperzito/bombobrowser/releases/latest/download/bombobrowser-${pkgver}-x86_64.tar.gz")
+sha256sums=('SKIP')   # Actualizar con makepkg -g después de descargar
+
+prepare() {
+    # El tarball extrae a bombobrowser-YYYYMMDD-x86_64/
+    _pkgdir=$(find "$srcdir" -maxdepth 1 -type d -name 'bombobrowser-*' | head -1)
+    if [ -z "$_pkgdir" ]; then
+        echo "ERROR: No se encontró el directorio del paquete en $srcdir"
+        exit 1
+    fi
+    ln -sf "$_pkgdir" "$srcdir/pkg_extracted"
+}
+
+package() {
+    _src="$srcdir/pkg_extracted"
+
+    # Binario principal
+    install -Dm755 "$_src/bombobrowser" "$pkgdir/usr/bin/bombobrowser"
+
+    # Iconos
+    for _size in 16 22 24 32 48 64 128 256; do
+        local _icon="$_src/icons/${_size}.png"
+        if [ -f "$_icon" ]; then
+            install -Dm644 "$_icon" \
+                "$pkgdir/usr/share/icons/hicolor/${_size}x${_size}/apps/bombobrowser.png"
+        fi
+    done
+
+    # Entrada de menú .desktop
+    if [ -f "$_src/bombobrowser.desktop" ]; then
+        install -Dm644 "$_src/bombobrowser.desktop" \
+            "$pkgdir/usr/share/applications/bombobrowser.desktop"
+    else
+        install -dm755 "$pkgdir/usr/share/applications"
+        cat > "$pkgdir/usr/share/applications/bombobrowser.desktop" << EOF
+[Desktop Entry]
+Name=BomboBrowser
+Comment=Navegador privado basado en Firefox
+Exec=bombobrowser %u
+Icon=bombobrowser
+Terminal=false
+Type=Application
+Categories=Network;WebBrowser;
+StartupWMClass=BomboBrowser
+MimeType=text/html;text/xml;application/xhtml+xml;x-scheme-handler/http;x-scheme-handler/https;
+EOF
+    fi
+
+    # Documentación
+    if [ -d "$_src/docs" ]; then
+        install -dm755 "$pkgdir/usr/share/doc/bombobrowser"
+        cp -r "$_src/docs/"* "$pkgdir/usr/share/doc/bombobrowser/"
+    fi
+}
+
+# Función para actualizar automáticamente la versión (usado por aurpublish/nvchecker)
+update() {
+    local _latest
+    _latest=$(curl -sL "https://api.github.com/repos/Topperzito/bombobrowser/releases/latest" \
+        | grep '"tag_name"' | sed 's/.*"v\?\([^"]*\)".*/\1/' | tr -d '.')
+    if [ -n "$_latest" ] && [ "$_latest" != "$pkgver" ]; then
+        sed -i "s/^pkgver=.*/pkgver=$_latest/" PKGBUILD
+        updpkgsums
+    fi
+}

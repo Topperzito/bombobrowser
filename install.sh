@@ -1,11 +1,11 @@
 #!/bin/bash
-set -e
-
-# BomboBrowser installer
+# BomboBrowser system installer
 # Usage: sudo ./install.sh
+# Must be run as root (invoked automatically by the packaging script).
+set -euo pipefail
 
 if [[ $EUID -ne 0 ]]; then
-    echo "This script must be run as root (use sudo)."
+    echo "This script must be run as root (use sudo)." >&2
     exit 1
 fi
 
@@ -20,14 +20,14 @@ echo "Installing BomboBrowser..."
 
 # Binary
 install -Dm755 "$SCRIPT_DIR/bombobrowser" "$BINDIR/bombobrowser"
-echo "  Binary: $BINDIR/bombobrowser"
+echo "  Binary:  $BINDIR/bombobrowser"
 
 # Icons
 if [ -d "$SCRIPT_DIR/icons" ]; then
     for icon in "$SCRIPT_DIR/icons"/*.png; do
         size=$(basename "$icon" .png)
         install -Dm644 "$icon" "$ICONDIR/${size}x${size}/apps/bombobrowser.png"
-        echo "  Icon: $ICONDIR/${size}x${size}/apps/bombobrowser.png"
+        echo "  Icon:    $ICONDIR/${size}x${size}/apps/bombobrowser.png"
     done
 fi
 
@@ -39,12 +39,15 @@ echo "  Desktop: $APPDIR/bombobrowser.desktop"
 if [ -d "$SCRIPT_DIR/docs" ]; then
     mkdir -p "$DOCDIR"
     cp -r "$SCRIPT_DIR/docs/"* "$DOCDIR/"
-    echo "  Docs: $DOCDIR"
+    echo "  Docs:    $DOCDIR"
 fi
 
-# Update icon cache
+# Refresh icon cache and desktop database
 if command -v gtk-update-icon-cache &>/dev/null; then
     gtk-update-icon-cache -f -t "$ICONDIR" 2>/dev/null || true
+fi
+if command -v update-desktop-database &>/dev/null; then
+    update-desktop-database "$APPDIR" 2>/dev/null || true
 fi
 
 echo ""

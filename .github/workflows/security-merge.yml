@@ -2,42 +2,80 @@ name: Auto-merge Firefox Security Updates
 
 on:
   schedule:
-    # Daily at 6:00 UTC
+    # Daily at 06:00 UTC
     - cron: "0 6 * * *"
   workflow_dispatch:
 
 jobs:
   merge:
     runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+      issues: write
+
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Get latest Firefox ESR tag
+      - name: Configure git identity
         run: |
-          git remote add upstream https://github.com/mozilla/gecko-dev.git
-          git fetch upstream --tags --depth=1 2>&1 | tail -2
-          # Get latest ESR tag
-          TAG=$(git tag -l "FIREFOX_*_ESR" --sort=-version:refname | head -1)
-          echo "LATEST_ESR=$TAG" >> $GITHUB_ENV
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Try merge
+      - name: Add upstream remote
+        run: |
+          git remote add upstream https://github.com/mozilla/gecko-dev.git || true
+
+      - name: Fetch upstream ESR tags
+        run: |
+          # Fetch only tags to avoid downloading the full history
+          git fetch upstream --tags --no-tags 2>/dev/null || \
+          git fetch upstream 'refs/tags/FIREFOX_*_ESR:refs/tags/FIREFOX_*_ESR' --depth=1 2>/dev/null || true
+
+      - name: Determine latest ESR tag
+        id: esr
+        run: |
+          TAG=$(git tag -l "FIREFOX_*_ESR" --sort=-version:refname | head -1)
+          if [ -z "$TAG" ]; then
+            echo "No ESR tags found — skipping merge."
+            echo "tag=" >> $GITHUB_OUTPUT
+          else
+            echo "tag=$TAG" >> $GITHUB_OUTPUT
+            echo "Latest ESR tag: $TAG"
+          fi
+
+      - name: Attempt merge
         id: merge
+        if: steps.esr.outputs.tag != ''
         continue-on-error: true
         run: |
           git checkout main
-          git merge --no-edit "upstream/${{ env.LATEST_ESR }}"
-          git push
+          # Merge the upstream tag commit (not a remote branch)
+          git merge --no-edit "${{ steps.esr.outputs.tag }}"
+          git push origin main
 
-      - name: Notify if merge failed
+      - name: Open issue on merge failure
         if: steps.merge.outcome == 'failure'
         uses: actions/github-script@v7
         with:
           script: |
-            github.rest.issues.create({
+            const tag = "${{ steps.esr.outputs.tag }}";
+            const { data: issues } = await github.rest.issues.listForRepo({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              title: '⚠️ Merge conflict con upstream Firefox',
-              body: 'El merge automático con la última ESR de Firefox falló. Resolver manualmente.',
-            })
+              state: 'open',
+              labels: 'upstream-conflict',
+            });
+            // Avoid duplicate issues for the same tag
+            const alreadyOpen = issues.some(i => i.title.includes(tag));
+            if (!alreadyOpen) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: `⚠️ Merge conflict con upstream Firefox (${tag})`,
+                body: `El merge automático con \`${tag}\` falló.\n\nResuelve el conflicto manualmente:\n\n\`\`\`bash\ngit fetch upstream\ngit checkout main\ngit merge ${tag}\n# Resolver conflictos\ngit add .\ngit commit\ngit push\n\`\`\``,
+                labels: ['upstream-conflict'],
+              });
+            }

@@ -1,1 +1,20 @@
+# Firefox/Gecko build output
 source/
+obj-*/
+dist/
+
+# macOS
+.DS_Store
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Python
+__pycache__/
+*.pyc
+
+# Shell
+*.orig

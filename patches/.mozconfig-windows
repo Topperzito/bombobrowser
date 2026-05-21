@@ -1,0 +1,40 @@
+# Build config for BomboBrowser — Windows (MSVC)
+. $topsrcdir/browser/config/mozconfig
+
+# Custom branding
+ac_add_options --with-branding=browser/branding/bombo
+
+# Release build
+ac_add_options --disable-debug
+ac_add_options --disable-tests
+ac_add_options --enable-optimize="-O2"
+
+# Disable Firefox's own crash reporter / updater
+ac_add_options --disable-crashreporter
+ac_add_options --disable-updater
+
+# Disable telemetry
+MOZ_TELEMETRY_REPORTING=
+MOZ_CRASHREPORTER=
+MOZ_UPDATER=
+MOZ_DATA_REPORTING=
+
+# WASM sandboxed libraries not available in CI
+ac_add_options --without-wasm-sandboxed-libraries
+
+# Use system Node.js
+ac_add_options --disable-nodejs
+
+# Do not let mach bootstrap packages
+ac_add_options --disable-bootstrap
+
+# Windows: use MSVC (Visual Studio) — do NOT force clang
+# ac_add_options --with-compiler-wrapper=...  (uses VS default)
+
+# 64-bit target
+ac_add_options --target=x86_64-pc-windows-msvc
+
+# RecursiveMake only
+ac_add_options --build-backends=RecursiveMake
+
+mk_add_options AUTOCLOBBER=1

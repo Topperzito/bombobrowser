@@ -5,6 +5,18 @@
 
 "use strict";
 
+/**
+ * BomboBrowser self-update system.
+ *
+ * Queries the GitHub Releases API once per session (after an idle delay) and
+ * shows a non-intrusive notification bar when a newer version is available.
+ *
+ * NOTE: This file is loaded via browser-main.js using
+ *   Services.scriptloader.loadSubScript(
+ *     "chrome://browser/content/bomboUpdate.js", this);
+ * The inline copy inside browser-main.js must be kept in sync with this file.
+ */
+
 var gBomboUpdate = {
   OWNER: "Topperzito",
   REPO: "bombobrowser",
@@ -17,170 +29,221 @@ var gBomboUpdate = {
   },
 
   async _check() {
-    let url = `https://api.github.com/repos/${this.OWNER}/${this.REPO}/releases/latest`;
+    const url = `https://api.github.com/repos/${this.OWNER}/${this.REPO}/releases/latest`;
     try {
-      let resp = await fetch(url);
+      const resp = await fetch(url);
       if (!resp.ok) return;
-      let data = await resp.json();
-      let latest = data.tag_name.replace(/^v/, "");
+
+      const data = await resp.json();
+      const latest = data.tag_name.replace(/^v/, "");
 
       if (!this._isNewer(latest, this.CURRENT_VERSION)) return;
       if (this._notified) return;
       this._notified = true;
 
-      let asset = this._findAsset(data.assets);
+      const asset = this._findAsset(data.assets);
       if (!asset) return;
 
       this._showBar(latest, asset.browser_download_url, asset.name);
-    } catch (e) {}
+    } catch (_e) {
+      // Network or parse error — fail silently
+    }
   },
 
+  /**
+   * Returns true when `latest` is semantically greater than `current`.
+   * Both arguments are dot-separated version strings, e.g. "1.2.3".
+   */
   _isNewer(latest, current) {
-    let l = latest.split(".").map(Number);
-    let c = current.split(".").map(Number);
-    for (let i = 0; i < Math.max(l.length, c.length); i++) {
-      if ((l[i] || 0) > (c[i] || 0)) return true;
-      if ((l[i] || 0) < (c[i] || 0)) return false;
+    const l = latest.split(".").map(Number);
+    const c = current.split(".").map(Number);
+    const len = Math.max(l.length, c.length);
+    for (let i = 0; i < len; i++) {
+      const lv = l[i] || 0;
+      const cv = c[i] || 0;
+      if (lv > cv) return true;
+      if (lv < cv) return false;
     }
     return false;
   },
 
+  /** Pick the release asset that matches the running OS. */
   _findAsset(assets) {
-    let plat = "";
-    if (Services.appinfo.OS === "WINNT") plat = "win64";
-    else if (Services.appinfo.OS === "Darwin") plat = "macos";
-    else plat = "linux";
+    let plat;
+    switch (Services.appinfo.OS) {
+      case "WINNT":  plat = "win64";  break;
+      case "Darwin": plat = "macos";  break;
+      default:       plat = "linux";  break;
+    }
 
-    for (let a of assets) {
+    // Prefer .tar.bz2 for the matching platform
+    for (const a of assets) {
       if (a.name.includes(plat) && a.name.endsWith(".tar.bz2")) return a;
     }
-    for (let a of assets) {
+    // Fall back to any asset for this platform
+    for (const a of assets) {
       if (a.name.includes(plat)) return a;
     }
-    return assets[0];
+    // Last resort: first asset in the list
+    return assets[0] ?? null;
   },
 
+  // ---------------------------------------------------------------------------
+  // UI helpers
+  // ---------------------------------------------------------------------------
+
   _showBar(version, url, filename) {
-    let doc = window.browsingContext.topChromeWindow.document;
+    const doc = window.browsingContext.topChromeWindow.document;
     if (doc.getElementById("bombo-update-notification")) return;
 
-    let box = doc.createElement("box");
+    const box = doc.createElement("box");
     box.id = "bombo-update-notification";
     box.setAttribute("align", "center");
-    box.style.background = "#1a1a2e";
-    box.style.color = "#e0e0e0";
-    box.style.padding = "8px 16px";
-    box.style.fontSize = "13px";
-    box.style.cursor = "pointer";
-    box.style.borderBottom = "1px solid #2ea043";
+    Object.assign(box.style, {
+      background:   "#1a1a2e",
+      color:        "#e0e0e0",
+      padding:      "8px 16px",
+      fontSize:     "13px",
+      cursor:       "pointer",
+      borderBottom: "1px solid #2ea043",
+    });
 
-    let inner = doc.createElement("hbox");
+    const inner = doc.createElement("hbox");
     inner.setAttribute("align", "center");
     inner.setAttribute("flex", "1");
     inner.style.justifyContent = "space-between";
 
-    let label = doc.createElement("label");
+    const label = doc.createElement("label");
     label.textContent = `BomboBrowser ${version} disponible —`;
     label.style.marginRight = "4px";
 
-    let link = doc.createElement("label");
+    const link = doc.createElement("label");
     link.setAttribute("crop", "end");
     link.textContent = "Descargar actualización";
-    link.style.color = "#2ea043";
-    link.style.textDecoration = "underline";
-    link.style.cursor = "pointer";
-    link.addEventListener("click", (e) => {
+    Object.assign(link.style, {
+      color:          "#2ea043",
+      textDecoration: "underline",
+      cursor:         "pointer",
+    });
+    link.addEventListener("click", e => {
       e.stopPropagation();
       this._downloadUpdate(url, filename, version);
     });
 
-    let close = doc.createElement("label");
+    const close = doc.createElement("label");
     close.textContent = "✕";
-    close.style.cursor = "pointer";
-    close.style.marginLeft = "12px";
-    close.style.color = "#888";
-    close.addEventListener("click", (e) => {
+    Object.assign(close.style, {
+      cursor:     "pointer",
+      marginLeft: "12px",
+      color:      "#888",
+    });
+    close.addEventListener("click", e => {
       e.stopPropagation();
       box.remove();
     });
 
-    inner.appendChild(label);
-    inner.appendChild(link);
-    inner.appendChild(close);
+    inner.append(label, link, close);
     box.appendChild(inner);
+    box.addEventListener("click", () =>
+      this._downloadUpdate(url, filename, version)
+    );
 
-    box.addEventListener("click", () => this._downloadUpdate(url, filename, version));
-
-    let nav = doc.getElementById("navigator-toolbox");
+    const nav = doc.getElementById("navigator-toolbox");
     if (nav) nav.parentNode.insertBefore(box, nav);
   },
 
   _downloadUpdate(url, filename, version) {
-    let doc = window.browsingContext.topChromeWindow.document;
-    let bar = doc.getElementById("bombo-update-notification");
-    if (bar) bar.remove();
+    const doc = window.browsingContext.topChromeWindow.document;
 
-    let box = doc.createElement("box");
+    // Remove any existing update UI
+    for (const id of ["bombo-update-notification", "bombo-update-progress"]) {
+      doc.getElementById(id)?.remove();
+    }
+
+    const box = doc.createElement("box");
     box.id = "bombo-update-progress";
     box.setAttribute("align", "center");
-    box.style.background = "#1a1a2e";
-    box.style.color = "#e0e0e0";
-    box.style.padding = "8px 16px";
-    box.style.fontSize = "13px";
+    Object.assign(box.style, {
+      background: "#1a1a2e",
+      color:      "#e0e0e0",
+      padding:    "8px 16px",
+      fontSize:   "13px",
+    });
 
-    let label = doc.createElement("label");
-    label.textContent = "Descargando actualización...";
-    box.appendChild(label);
+    const statusLabel = doc.createElement("label");
+    statusLabel.textContent = "Descargando actualización...";
+    box.appendChild(statusLabel);
 
-    let nav = doc.getElementById("navigator-toolbox");
+    const nav = doc.getElementById("navigator-toolbox");
     if (nav) nav.parentNode.insertBefore(box, nav);
 
-    let xhr = new XMLHttpRequest();
+    const xhr = new XMLHttpRequest();
     xhr.open("GET", url, true);
     xhr.responseType = "arraybuffer";
 
-    xhr.onprogress = (e) => {
+    xhr.onprogress = e => {
       if (e.lengthComputable) {
-        let pct = Math.round((e.loaded / e.total) * 100);
-        label.textContent = `Descargando actualización... ${pct}%`;
+        const pct = Math.round((e.loaded / e.total) * 100);
+        statusLabel.textContent = `Descargando actualización... ${pct}%`;
       }
     };
 
     xhr.onload = () => {
-      let data = new Uint8Array(xhr.response);
-      let file = this._getDownloadFile("bombobrowser-" + version + ".tar.bz2");
-      if (!file) return;
+      if (!xhr.response) {
+        statusLabel.textContent = "Error: respuesta vacía.";
+        box.style.background = "#da3633";
+        return;
+      }
+
+      // Build destination path: ~/Downloads/bombobrowser-<version>.tar.bz2
+      const file = Cc["@mozilla.org/file/directory_service;1"]
+        .getService(Ci.nsIProperties)
+        .get("Home", Ci.nsIFile);
+      file.append("Downloads");
+      if (!file.exists() || !file.isDirectory()) {
+        file.create(Ci.nsIFile.DIRECTORY_TYPE, 0o755);
+      }
+      file.append(`bombobrowser-${version}.tar.bz2`);
 
       try {
-        let fos = Cc["@mozilla.org/network/file-output-stream;1"]
+        // nsIFileOutputStream.write() expects a string — convert via BinaryInputStream
+        const fos = Cc["@mozilla.org/network/file-output-stream;1"]
           .createInstance(Ci.nsIFileOutputStream);
+        // 0x02 = PR_WRONLY, 0x08 = PR_CREATE_FILE, 0x20 = PR_TRUNCATE
         fos.init(file, 0x02 | 0x08 | 0x20, 0o644, 0);
-        fos.write(data, data.length);
+
+        const bos = Cc["@mozilla.org/binaryoutputstream;1"]
+          .createInstance(Ci.nsIBinaryOutputStream);
+        bos.setOutputStream(fos);
+        bos.writeByteArray(new Uint8Array(xhr.response));
+        bos.close();
         fos.close();
 
-        label.textContent = "Descarga completa. Reinicia el navegador para aplicar.";
+        statusLabel.textContent = "Descarga completa. Reinicia para aplicar.";
         box.style.background = "#2ea043";
 
-        let restart = doc.createElement("label");
+        const restart = doc.createElement("label");
         restart.textContent = "Reiniciar ahora";
-        restart.style.color = "white";
-        restart.style.textDecoration = "underline";
-        restart.style.cursor = "pointer";
-        restart.style.marginLeft = "12px";
-        restart.addEventListener("click", () => {
+        Object.assign(restart.style, {
+          color:          "white",
+          textDecoration: "underline",
+          cursor:         "pointer",
+          marginLeft:     "12px",
+        });
+        restart.addEventListener("click", () =>
           Services.startup.quit(
             Ci.nsIAppStartup.eAttemptQuit | Ci.nsIAppStartup.eRestart
-          );
-        });
+          )
+        );
         box.appendChild(restart);
-      } catch (e) {
-        label.textContent = "Error al guardar la actualización.";
+      } catch (_e) {
+        statusLabel.textContent = "Error al guardar la actualización.";
         box.style.background = "#da3633";
       }
     };
 
     xhr.onerror = () => {
-      label.textContent = "Error de descarga. Inténtalo más tarde.";
+      statusLabel.textContent = "Error de descarga. Inténtalo más tarde.";
       box.style.background = "#da3633";
     };
 
@@ -188,7 +251,7 @@ var gBomboUpdate = {
   },
 
   _getDownloadFile(name) {
-    let file = Cc["@mozilla.org/file/directory_service;1"]
+    const file = Cc["@mozilla.org/file/directory_service;1"]
       .getService(Ci.nsIProperties)
       .get("Home", Ci.nsIFile);
     file.append("Downloads");
