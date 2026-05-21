@@ -82,36 +82,36 @@ jobs:
 
           cp install.sh "dist/$PKGNAME/install.sh" && chmod +x "dist/$PKGNAME/install.sh"
 
-          cat > "dist/$PKGNAME/bombobrowser.desktop" << EOF
-[Desktop Entry]
-Name=BomboBrowser
-Comment=Privacy-focused Firefox fork
-Exec=bombobrowser %u
-Icon=bombobrowser
-Type=Application
-Categories=Network;WebBrowser;
-Terminal=false
-StartupNotify=true
-StartupWMClass=BomboBrowser
-MimeType=text/html;text/xml;application/xhtml+xml;x-scheme-handler/http;x-scheme-handler/https;
-EOF
+          printf '%s\n' \
+            '[Desktop Entry]' \
+            'Name=BomboBrowser' \
+            'Comment=Privacy-focused Firefox fork' \
+            'Exec=bombobrowser %u' \
+            'Icon=bombobrowser' \
+            'Type=Application' \
+            'Categories=Network;WebBrowser;' \
+            'Terminal=false' \
+            'StartupNotify=true' \
+            'StartupWMClass=BomboBrowser' \
+            'MimeType=text/html;text/xml;application/xhtml+xml;x-scheme-handler/http;x-scheme-handler/https;' \
+            > "dist/$PKGNAME/bombobrowser.desktop"
 
-          cat > "dist/$PKGNAME/uninstall.sh" << 'EOF'
-#!/bin/bash
-set -e
-[[ $EUID -ne 0 ]] && { echo "Run with sudo."; exit 1; }
-rm -f /usr/local/bin/bombobrowser
-rm -f /usr/local/share/applications/bombobrowser.desktop
-for sz in 16 22 24 32 48 64 128 256; do
-  rm -f "/usr/local/share/icons/hicolor/${sz}x${sz}/apps/bombobrowser.png"
-done
-rm -rf /usr/local/share/doc/bombobrowser
-echo "BomboBrowser uninstalled."
-EOF
+          printf '%s\n' \
+            '#!/bin/bash' \
+            'set -e' \
+            '[[ $EUID -ne 0 ]] && { echo "Run with sudo."; exit 1; }' \
+            'rm -f /usr/local/bin/bombobrowser' \
+            'rm -f /usr/local/share/applications/bombobrowser.desktop' \
+            'for sz in 16 22 24 32 48 64 128 256; do' \
+            '  rm -f "/usr/local/share/icons/hicolor/${sz}x${sz}/apps/bombobrowser.png"' \
+            'done' \
+            'rm -rf /usr/local/share/doc/bombobrowser' \
+            'echo "BomboBrowser uninstalled."' \
+            > "dist/$PKGNAME/uninstall.sh"
           chmod +x "dist/$PKGNAME/uninstall.sh"
 
           cp README.md "dist/$PKGNAME/docs/" 2>/dev/null || true
-          cp LICENSE   "dist/$PKGNAME/docs/" 2>/dev/null || true
+          cp LICENSE "dist/$PKGNAME/docs/" 2>/dev/null || true
 
           cd dist
           tar czf "${PKGNAME}.tar.gz" "${PKGNAME}/"
@@ -195,38 +195,38 @@ EOF
           cp -r "$OBJDIR/dist/bin/defaults" "dist/$PKGNAME/defaults" 2>/dev/null || true
 
           # Create simple NSIS installer script
-          cat > "dist/installer.nsi" << 'NSIS'
-!include "MUI2.nsh"
-Name "BomboBrowser"
-OutFile "bombobrowser-setup.exe"
-InstallDir "$PROGRAMFILES64\BomboBrowser"
-InstallDirRegKey HKCU "Software\BomboBrowser" ""
-RequestExecutionLevel admin
-
-!insertmacro MUI_PAGE_DIRECTORY
-!insertmacro MUI_PAGE_INSTFILES
-!insertmacro MUI_UNPAGE_CONFIRM
-!insertmacro MUI_UNPAGE_INSTFILES
-!insertmacro MUI_LANGUAGE "Spanish"
-
-Section "Install"
-  SetOutPath "$INSTDIR"
-  File /r "bombobrowser-*-win64\*.*"
-  WriteUninstaller "$INSTDIR\uninstall.exe"
-  CreateShortcut "$DESKTOP\BomboBrowser.lnk" "$INSTDIR\bombobrowser.exe"
-  CreateDirectory "$SMPROGRAMS\BomboBrowser"
-  CreateShortcut "$SMPROGRAMS\BomboBrowser\BomboBrowser.lnk" "$INSTDIR\bombobrowser.exe"
-  WriteRegStr HKCU "Software\BomboBrowser" "" "$INSTDIR"
-SectionEnd
-
-Section "Uninstall"
-  Delete "$INSTDIR\uninstall.exe"
-  RMDir /r "$INSTDIR"
-  Delete "$DESKTOP\BomboBrowser.lnk"
-  RMDir /r "$SMPROGRAMS\BomboBrowser"
-  DeleteRegKey HKCU "Software\BomboBrowser"
-SectionEnd
-NSIS
+          printf '%s\n' \
+            '!include "MUI2.nsh"' \
+            'Name "BomboBrowser"' \
+            'OutFile "bombobrowser-setup.exe"' \
+            'InstallDir "$PROGRAMFILES64\BomboBrowser"' \
+            'InstallDirRegKey HKCU "Software\BomboBrowser" ""' \
+            'RequestExecutionLevel admin' \
+            '' \
+            '!insertmacro MUI_PAGE_DIRECTORY' \
+            '!insertmacro MUI_PAGE_INSTFILES' \
+            '!insertmacro MUI_UNPAGE_CONFIRM' \
+            '!insertmacro MUI_UNPAGE_INSTFILES' \
+            '!insertmacro MUI_LANGUAGE "Spanish"' \
+            '' \
+            'Section "Install"' \
+            '  SetOutPath "$INSTDIR"' \
+            '  File /r "bombobrowser-*-win64\*.*"' \
+            '  WriteUninstaller "$INSTDIR\uninstall.exe"' \
+            '  CreateShortcut "$DESKTOP\BomboBrowser.lnk" "$INSTDIR\bombobrowser.exe"' \
+            '  CreateDirectory "$SMPROGRAMS\BomboBrowser"' \
+            '  CreateShortcut "$SMPROGRAMS\BomboBrowser\BomboBrowser.lnk" "$INSTDIR\bombobrowser.exe"' \
+            '  WriteRegStr HKCU "Software\BomboBrowser" "" "$INSTDIR"' \
+            'SectionEnd' \
+            '' \
+            'Section "Uninstall"' \
+            '  Delete "$INSTDIR\uninstall.exe"' \
+            '  RMDir /r "$INSTDIR"' \
+            '  Delete "$DESKTOP\BomboBrowser.lnk"' \
+            '  RMDir /r "$SMPROGRAMS\BomboBrowser"' \
+            '  DeleteRegKey HKCU "Software\BomboBrowser"' \
+            'SectionEnd' \
+            > "dist/installer.nsi"
 
           cd dist
           # Build NSIS installer if makensis is available
@@ -288,20 +288,3 @@ NSIS
             ### 🐧 Linux (Ubuntu, Debian, Arch y cualquier distro)
             ```bash
             bash <(curl -sL https://github.com/Topperzito/bombobrowser/raw/main/installers/linux-install.sh)
-            ```
-
-            ### 🪟 Windows
-            Descarga el instalador `.exe` de abajo y ejecútalo.
-
-            ### 🎩 Arch Linux (AUR)
-            ```bash
-            yay -S bombobrowser-bin
-            # o con paru:
-            paru -S bombobrowser-bin
-            ```
-          files: |
-            artifacts/bombobrowser-linux-x86_64/*.tar.gz
-            artifacts/bombobrowser-windows-x86_64/*.exe
-            artifacts/bombobrowser-windows-x86_64/*.zip
-          make_latest: true
-          fail_on_unmatched_files: false
