@@ -10,7 +10,7 @@ pkgrel=1
 pkgdesc="Navegador web basado en Firefox con privacidad reforzada"
 arch=('x86_64')
 url="https://github.com/Topperzito/bombobrowser"
-license=('MPL2')
+license=('MPL-2.0')
 depends=(
     'gtk3'
     'libxt'
@@ -32,14 +32,14 @@ options=('!strip')
 
 # La URL se actualiza con el script update() de abajo
 source=("bombobrowser-${pkgver}-x86_64.tar.gz::https://github.com/Topperzito/bombobrowser/releases/latest/download/bombobrowser-${pkgver}-x86_64.tar.gz")
-sha256sums=('SKIP')   # Actualizar con makepkg -g después de descargar
+sha256sums=('SKIP')   # Actualizar con: makepkg -g
 
 prepare() {
     # El tarball extrae a bombobrowser-YYYYMMDD-x86_64/
     _pkgdir=$(find "$srcdir" -maxdepth 1 -type d -name 'bombobrowser-*' | head -1)
     if [ -z "$_pkgdir" ]; then
         echo "ERROR: No se encontró el directorio del paquete en $srcdir"
-        exit 1
+        return 1
     fi
     ln -sf "$_pkgdir" "$srcdir/pkg_extracted"
 }

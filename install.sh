@@ -25,6 +25,7 @@ echo "  Binary:  $BINDIR/bombobrowser"
 # Icons
 if [ -d "$SCRIPT_DIR/icons" ]; then
     for icon in "$SCRIPT_DIR/icons"/*.png; do
+        [ -f "$icon" ] || continue
         size=$(basename "$icon" .png)
         install -Dm644 "$icon" "$ICONDIR/${size}x${size}/apps/bombobrowser.png"
         echo "  Icon:    $ICONDIR/${size}x${size}/apps/bombobrowser.png"
@@ -34,6 +35,12 @@ fi
 # Desktop entry
 install -Dm644 "$SCRIPT_DIR/bombobrowser.desktop" "$APPDIR/bombobrowser.desktop"
 echo "  Desktop: $APPDIR/bombobrowser.desktop"
+
+# Uninstaller
+if [ -f "$SCRIPT_DIR/uninstall.sh" ]; then
+    install -Dm755 "$SCRIPT_DIR/uninstall.sh" "/usr/local/share/doc/bombobrowser/uninstall.sh"
+    echo "  Uninstaller: /usr/local/share/doc/bombobrowser/uninstall.sh"
+fi
 
 # Documentation
 if [ -d "$SCRIPT_DIR/docs" ]; then
@@ -48,6 +55,9 @@ if command -v gtk-update-icon-cache &>/dev/null; then
 fi
 if command -v update-desktop-database &>/dev/null; then
     update-desktop-database "$APPDIR" 2>/dev/null || true
+fi
+if command -v update-mime-database &>/dev/null; then
+    update-mime-database /usr/local/share/mime 2>/dev/null || true
 fi
 
 echo ""

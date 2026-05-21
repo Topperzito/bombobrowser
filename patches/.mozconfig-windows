@@ -1,4 +1,4 @@
-# Build config for BomboBrowser
+# Build config for BomboBrowser (Windows)
 . $topsrcdir/browser/config/mozconfig
 
 ac_add_options --with-branding=browser/branding/bombo

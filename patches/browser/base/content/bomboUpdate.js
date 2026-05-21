@@ -14,7 +14,6 @@
  * NOTE: This file is loaded via browser-main.js using
  *   Services.scriptloader.loadSubScript(
  *     "chrome://browser/content/bomboUpdate.js", this);
- * The inline copy inside browser-main.js must be kept in sync with this file.
  */
 
 var gBomboUpdate = {
@@ -76,7 +75,11 @@ var gBomboUpdate = {
       default:       plat = "linux";  break;
     }
 
-    // Prefer .tar.bz2 for the matching platform
+    // Prefer .tar.gz for the matching platform (Linux build output format)
+    for (const a of assets) {
+      if (a.name.includes(plat) && a.name.endsWith(".tar.gz")) return a;
+    }
+    // Fall back to any tarball for this platform
     for (const a of assets) {
       if (a.name.includes(plat) && a.name.endsWith(".tar.bz2")) return a;
     }
@@ -195,7 +198,10 @@ var gBomboUpdate = {
         return;
       }
 
-      // Build destination path: ~/Downloads/bombobrowser-<version>.tar.bz2
+      // Build destination path: ~/Downloads/bombobrowser-<version>.<ext>
+      const ext = filename.endsWith(".tar.gz") ? "tar.gz" : "tar.bz2";
+      const destName = `bombobrowser-${version}.${ext}`;
+
       const file = Cc["@mozilla.org/file/directory_service;1"]
         .getService(Ci.nsIProperties)
         .get("Home", Ci.nsIFile);
@@ -203,10 +209,9 @@ var gBomboUpdate = {
       if (!file.exists() || !file.isDirectory()) {
         file.create(Ci.nsIFile.DIRECTORY_TYPE, 0o755);
       }
-      file.append(`bombobrowser-${version}.tar.bz2`);
+      file.append(destName);
 
       try {
-        // nsIFileOutputStream.write() expects a string — convert via BinaryInputStream
         const fos = Cc["@mozilla.org/network/file-output-stream;1"]
           .createInstance(Ci.nsIFileOutputStream);
         // 0x02 = PR_WRONLY, 0x08 = PR_CREATE_FILE, 0x20 = PR_TRUNCATE
@@ -248,18 +253,6 @@ var gBomboUpdate = {
     };
 
     xhr.send();
-  },
-
-  _getDownloadFile(name) {
-    const file = Cc["@mozilla.org/file/directory_service;1"]
-      .getService(Ci.nsIProperties)
-      .get("Home", Ci.nsIFile);
-    file.append("Downloads");
-    if (!file.exists() || !file.isDirectory()) {
-      file.create(Ci.nsIFile.DIRECTORY_TYPE, 0o755);
-    }
-    file.append(name);
-    return file;
   },
 };
 

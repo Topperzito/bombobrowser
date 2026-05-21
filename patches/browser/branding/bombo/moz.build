@@ -8,5 +8,7 @@ DIRS += ["content", "locales"]
 DIST_SUBDIR = "browser"
 export("DIST_SUBDIR")
 
-include("../branding-common.mozbuild")
-FirefoxBranding()
+# NOTE: branding-common.mozbuild is provided by gecko-dev at
+# browser/branding/branding-common.mozbuild.  We intentionally do NOT
+# call FirefoxBranding() here because that macro pulls in official
+# Mozilla branding requirements that conflict with a third-party fork.

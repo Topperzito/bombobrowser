@@ -1,7 +1,8 @@
-# Firefox/Gecko build output
-source/
+# Firefox/Gecko build output and cloned source
+firefox-src/
 obj-*/
 dist/
+artifacts/
 
 # macOS
 .DS_Store
@@ -18,3 +19,6 @@ __pycache__/
 
 # Shell
 *.orig
+
+# Local env overrides
+.env

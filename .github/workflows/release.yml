@@ -33,8 +33,8 @@ jobs:
         run: |
           # Use date-based tag so every successful build creates a unique release
           TAG="v$(date +%Y%m%d)"
-          echo "tag=$TAG" >> $GITHUB_OUTPUT
-          echo "name=BomboBrowser $TAG" >> $GITHUB_OUTPUT
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "name=BomboBrowser $TAG" >> "$GITHUB_OUTPUT"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -57,6 +57,9 @@ jobs:
             cd bombobrowser-*-x86_64
             sudo ./install.sh
             ```
-          files: artifacts/bombobrowser-linux-x86_64/*.tar.gz
+          files: |
+            artifacts/bombobrowser-linux-x86_64/*.tar.gz
+            artifacts/bombobrowser-windows-x86_64/*.exe
+            artifacts/bombobrowser-windows-x86_64/*.zip
           make_latest: true
           fail_on_unmatched_files: false
